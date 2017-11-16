@@ -65,9 +65,8 @@ node {
         def jenkinsJobUrl="http://localhost:8080/job/sbuisson/job/jenkinsCraft/view/change-requests/job/${env.BRANCH_NAME}"
 
         if ("master" == env.BRANCH_NAME) {
-            if(isUp(http://sonarqube:9000 )){
+            if(isUp("http://sonarqube:9000" )){
 
-                echo 'sonar master'
                 echo "sonar master"
                 sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
 
