@@ -51,7 +51,7 @@ void sendCommentToPullRequest(String prId, String messageContent){
 node {
     stage('metrics') {
         echo "build"
-        echo JSON.stringify(env)
+        print env.toString()
         checkout scm
 
 
