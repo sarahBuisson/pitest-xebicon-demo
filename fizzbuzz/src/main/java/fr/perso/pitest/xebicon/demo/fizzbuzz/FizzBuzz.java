@@ -25,6 +25,11 @@ public class FizzBuzz {
             appendMessage("code still not covered by standard nor mutation");
 
         }
+        if (false){
+
+            appendMessage("code still not covered by standard nor mutation");
+
+        }
         return message;
     }
 

@@ -72,7 +72,6 @@ node {
     stage('build') {
        echo "build"
         checkout scm
-        sh "git branch"
         sh "mvn clean install -B"
     }
     stage('metrics') {
@@ -99,6 +98,18 @@ node {
                 sh "mvn sonar:sonar $sonarParam  -B "
 
             }
+            sh "mvn pitest:mutationCoverage -Pquality -B"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
+
+            try{
+                sh "mvn universal-module-aggregator:aggregate -Pquality -B -U"
+            }catch ( e){
+                echo e.toString();
+            }
+            //build site ( for documentation)
+            sh "mvn site -Pquality -U site:stage"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
+
             sh "mvn pitest:mutationCoverage -Pquality -B"
             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
 
