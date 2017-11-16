@@ -1,3 +1,8 @@
+        def sonarQubeUrl="http://sonarqube:9000"
+        def githubOrganization="sarahBuisson"
+        def githubRepository="pitest-xebicon-demo"
+
+
 void setBuildStatus(String url, String context, String message, String state, String backref){
   step([
     $class: "GitHubCommitStatusSetter",
@@ -32,10 +37,15 @@ def getTitle(json) {
 
 def isUp(url){
  def r = sh script: 'wget -q '+url+' -O /dev/null', returnStatus: true
+
+ echo "up $r"
       return (r==0)
 }
-void sendCommentToPullRequest(String prId, String messageContent){
 
+
+
+
+void sendCommentToPullRequest(String repoGithub, String prId, String messageContent){
 
      def SHA1 ="SHA1"
      script {
@@ -43,89 +53,145 @@ void sendCommentToPullRequest(String prId, String messageContent){
      }
 
      def message = """{"body": "$messageContent", "commit_id": "$SHA1", "path": "/", "position": 0}"""
-     httpRequest authentication: 'sbuisson-git', httpMode: 'POST', requestBody: "${message}",  url: "https://api.github.com/repos/sbuisson/jenkinsCraft/issues/${prId}/comments"
+     httpRequest authentication: 'sbuisson-git', httpMode: 'POST', requestBody: "${message}",  url: "https://api.github.com/repos/$repoGithub/issues/${env.CHANGE_ID}/comments"
+}
+
+void getBranch(String repoGithub, String authentification, String pullId){
+ def response = httpRequest authentication: authentification, httpMode: 'GET',  url: "https://api.github.com/repos/$repoGithub/pulls/$pullId"
+
+
+ return new groovy.json.JsonSlurper().parseText(response.content).head.ref;
+}
+
+def getFromPom(pom, balise) {
+    def matcher = readFile(pom) =~ "<$balise>(.+)</$balise>"
+    matcher ? matcher[0][1] : null
 }
 
 
-
 node {
-    stage('metrics') {
-        echo "build"
-        print env.getOverriddenEnvironment()
+    stage('build') {
+
         checkout scm
-
-
         sh "mvn clean install -B"
+    }
+    stage('metrics') {
 
 
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
 
+        def databaseSonarParam = " -Dsonar.jdbc.username=${env.CI_LOGIN} -Dsonar.jdbc.password=${env.CI_PASSWORD} -Dsonar.jdbc.url=jdbc:postgresql://postgres:5432/ci "
+        def sonarParam = " -Dsonar.host.url=$sonarQubeUrl -Dsonar.login=${env.SONAR_LOGIN} -Dsonar.password=${env.SONAR_LOGIN} "
+        //TODO : use credential for password sonar
+        def jenkinsJobUrl="http://localhost:8080/job/$githubOrganization/job/$githubRepository/view/change-requests/job/${env.BRANCH_NAME}"
+        http://localhost:8080/job/sarahbuisson/job/jenkinsCraft/view/change-requests/job/PR-18/HTML_site/pit-reports/index.html
 
-        def databaseSonarParam = " -Dsonar.jdbc.username=ci_user -Dsonar.jdbc.password=ci -Dsonar.jdbc.url=jdbc:postgresql://postgres:5432/ci "
-        def sonarParam = " -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin "
-        def jenkinsJobUrl="http://localhost:8080/job/sbuisson/job/jenkinsCraft/view/change-requests/job/${env.BRANCH_NAME}"
+        def githubProject="sarahBuisson/pitest-xebicon-demo"
+        def groupId="com.github.sarahbuisson"
+        def artifactId="pitest-xebicon-demo"
 
         if ("master" == env.BRANCH_NAME) {
-            if (isUp("http://sonarqube:9000")){
+            if (isUp(sonarQubeUrl)){
 
                 echo("sonar master")
                 sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
 
             }
+            sh "mvn pitest:mutationCoverage -Pquality -B"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
+
+            try{
+                sh "mvn universal-module-aggregator:aggregate -Pquality -B -U"
+            }catch ( e){
+                echo e.toString();
+            }
+            //build site ( for documentation)
+            sh "mvn site -Pquality -U site:stage"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
+
         }
         else if(!env.BRANCH_NAME.startsWith("PR-")){
 
-            if(isUp("http://sonarqube:9000")){
+            if(isUp(sonarQubeUrl)){
 
                 echo("sonar branch ${env.BRANCH_NAME}")
                 sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
 
             }
+            sh "mvn pitest:mutationCoverage -Pquality -B"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
+
+            try{
+                sh "mvn universal-module-aggregator:aggregate -Pquality -B -U"
+            }catch ( e){
+                echo e.toString();
+            }
+            //build site ( for documentation)
+            sh "mvn site -Pquality -U site:stage"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
+
+
         } else {
 
 
-            def prId="${env.BRANCH_NAME.substring(3)}"
-            def comment=""
+            def githubUrl = "${env.CHANGE_URL}"
+
+            def resume = "Build Infos : <br/>"
 
 
+            resume+="<a href='${jenkinsJobUrl}/${env.BUILD_NUMBER}/console'>logs</a><br/>"
 
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-git', usernameVariable: 'GH_LOGIN', passwordVariable: 'GH_PASSWORD']]) {
                 withCredentials([[$class: 'StringBinding', credentialsId: ' git-token', variable: 'OATH']]) {
-                    def githubSonarParam="-Dsonar.github.pullRequest=${prId}\
-                                                        -Dsonar.github.repository=sbuisson/jenkinsCraft \
+                    def githubSonarParam="-Dsonar.github.pullRequest=${env.CHANGE_ID}\
+                                                        -Dsonar.github.repository=$githubProject \
                                                         -Dsonar.github.login=${env.GH_LOGIN} \
                                                         -Dsonar.github.oauth=${env.GH_PASSWORD}  \
                                                         -Dsonar.verbose=true "
-                    // -Dsonar.github.password=${env.GH_PASSWORD}
-                    if(isUp("http://sonarqube:9000")){
-                        sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam $githubSonarParam -B"
+
+
+                    def branchName = getBranch(githubOrganization+"/"+githubRepository, 'sbuisson-git', env.CHANGE_ID);
+
+                    //sonar
+                    if(isUp(sonarQubeUrl)){
+                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview -Dsonar.issuesReport.html.enable=true -Dsonar.issuesReport.json.enable=true $sonarParam $databaseSonarParam $githubSonarParam -B"
 
                         echo "metrics sonar"
-                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview $sonarParam $databaseSonarParam $githubSonarParam -B"
-                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/sonar', reportFiles: '*', reportName: 'sonar site', reportTitles: 'sonar'])
-                        comment+="rapport sonar : <a href='http://localhost:9000/dashboard?id=fr.perso%3Ajenkinscraft'>here</a> and <a href='${jenkinsJobUrl}//sonar_site/index.html'>here</a> <br/>"
+
+                        publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/issues-report/', reportFiles: '*', reportName: 'sonar site', reportTitles: 'sonar'])
+                        resume+="rapport sonar : and <a href='${jenkinsJobUrl}//sonar_site/issues-report.html'>Pull-request</a> et <a href='http://localhost:9000/dashboard?id=$groupId%3A$artifactId'>master</a>(pour comparaison)  <br/>"
                     }
 
 
-                    echo "metrics pitest"
-                    sh "mvn pitest:mutationCoverage universal-module-aggregator:aggregate -Pquality -Ppull-request  -DoriginReference=origin/sample_branch -B"
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
-                    comment+="rapport pitest : <a href='${jenkinsJobUrl}/HTML_site/pit-reports/index.html'>here</a> <br/>"
 
-                    echo "metrics site"
+                    // pitest
+                    sh "mvn pitest:mutationCoverage -Pquality -DoriginReference=$branchName -B"
+                    publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
+                    resume+="rapport pitest : <a href='${jenkinsJobUrl}//HTML_site//pit-reports/index.html'>here</a> <br/>"
 
-                    sh "site -Pquality -U site:stage"
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
-                    comment+="rapport site : <a href='${jenkinsJobUrl}//HTML_site/project-info.html'>here</a> <br/>"
+                    try{
+                        sh "mvn universal-module-aggregator:aggregate -Pquality -B -U"
+                    }catch ( e){
+                        echo e
+                    }
+
+                    //build site ( for documentation)
+                    sh "mvn site -Pquality -U site:stage"
+                    publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
+                    resume+="documentation : <a href='${jenkinsJobUrl}//HTML_site/project-info.html'>here</a> <br/>"
 
 
 
 
-                    comment+="job : ${env.JOB_NAME}"
+                    resume+="job : ${env.JOB_NAME}"
 
-                    sendCommentToPullRequest(prId, comment)
+                    sendCommentToPullRequest(githubOrganization+"/"+githubRepository, env.CHANGE_ID, resume)
                 }
             }
         }
+        }}
+
     }
 
 }

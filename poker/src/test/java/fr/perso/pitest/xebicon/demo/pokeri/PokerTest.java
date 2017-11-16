@@ -1,5 +1,6 @@
-package fr.perso.pitest.xebicon.demo.poker;
+package fr.perso.pitest.xebicon.demo.pokeri;
 
+import fr.perso.pitest.xebicon.demo.poker.*;
 import org.junit.Assert;
 import org.junit.Test;
 

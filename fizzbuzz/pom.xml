@@ -11,17 +11,6 @@
 
     <artifactId>fizzbuzz</artifactId>
 
-    <reporting>
 
-        <plugins>
-            <plugin>
-                <groupId>org.pitest</groupId>
-                <artifactId>pitest-maven</artifactId>
-
-                <version>1.2.4</version>
-
-            </plugin>
-        </plugins>
-    </reporting>
 
 </project>
