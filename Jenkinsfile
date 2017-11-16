@@ -29,11 +29,6 @@ def getTitle(json) {
    def jsonObject = slurper.parseText(json.content)
    jsonObject.title
 }
-
-def isUp(url){
- def r = sh script: 'wget -q '+url+' -O /dev/null', returnStatus: true
-      return (r==0)
-}
 void sendCommentToPullRequest(String prId, String messageContent){
 
 
@@ -50,41 +45,27 @@ void sendCommentToPullRequest(String prId, String messageContent){
 
 node {
     stage('metrics') {
-
-
         checkout scm
-
-
         sh "mvn clean install -B"
 
 
-
-
+        //sonar part
         def databaseSonarParam = " -Dsonar.jdbc.username=ci_user -Dsonar.jdbc.password=ci -Dsonar.jdbc.url=jdbc:postgresql://postgres:5432/ci "
         def sonarParam = " -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin "
         def jenkinsJobUrl="http://localhost:8080/job/sbuisson/job/jenkinsCraft/view/change-requests/job/${env.BRANCH_NAME}"
-
+       // def githubParam = "-Dsonar.github.repository=jakejustus/openedge-jenkins-public -Dsonar.github.oauth=${env.GH_PASSWORD}"
         if ("master" == env.BRANCH_NAME) {
-            if(isUp("http://sonarqube:9000" )){
-
-                echo("sonar master")
-                sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
-
-            }
-        }
-        else if(!env.BRANCH_NAME.startsWith("PR-")){
-
-            if(isUp(http://sonarqube:9000 )){
-
-                echo("sonar branch ${env.BRANCH_NAME}")
-                sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
-
-            }
+            echo "sonar master"
+            sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
+        } else if(!env.BRANCH_NAME.startsWith("PR-")){
+            echo "sonar branch ${env.BRANCH_NAME}"
+            sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
+      //      sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
         } else {
 
 
+            def messagePR=""
             def prId="${env.BRANCH_NAME.substring(3)}"
-            def comment=""
 
 
 
@@ -95,34 +76,29 @@ node {
                                                         -Dsonar.github.login=${env.GH_LOGIN} \
                                                         -Dsonar.github.oauth=${env.GH_PASSWORD}  \
                                                         -Dsonar.verbose=true "
-                    // -Dsonar.github.password=${env.GH_PASSWORD}
-                    if(isUp(http://sonarqube:9000 )){
-                        sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam $githubSonarParam -B"
+// -Dsonar.github.password=${env.GH_PASSWORD}
 
-                        echo "metrics sonar"
-                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview $sonarParam $databaseSonarParam $githubSonarParam -B"
-                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/sonar', reportFiles: '*', reportName: 'sonar site', reportTitles: 'sonar'])
-                        comment+="rapport sonar : <a href='http://localhost:9000/dashboard?id=fr.perso%3Ajenkinscraft'>here</a> and <a href='${jenkinsJobUrl}//sonar_site/index.html'>here</a> <br/>"
-                    }
+                    sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam $githubSonarParam -B"
 
+
+                    echo "metrics sonar"
+                    sh "mvn sonar:sonar -Dsonar.analysis.mode=preview $sonarParam $databaseSonarParam $githubSonarParam -B"
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/sonar', reportFiles: '*', reportName: 'sonar site', reportTitles: 'sonar'])
+                    messagePR+="rapport sonar : <a href='http://localhost:9000/dashboard?id=fr.perso%3Ajenkinscraft'>here</a> and <a href='${jenkinsJobUrl}//sonar_site/index.html'>here</a> <br/>"
 
                     echo "metrics pitest"
-                    sh "mvn pitest:mutationCoverage universal-module-aggregator:aggregate -Ppull-request -B"
+                    sh "mvn pitest:mutationCoverage -DreportsDirectory=target/pit-reports -B"
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
-                    comment+="rapport pitest : <a href='${jenkinsJobUrl}/HTML_site/pit-reports/index.html'>here</a> <br/>"
+                    messagePR+="rapport pitest : <a href='${jenkinsJobUrl}/HTML_site/pit-reports/index.html'>here</a> <br/>"
 
                     echo "metrics site"
+                    sh "mvn site -B"
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/site', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
+                    messagePR+="rapport site : <a href='${jenkinsJobUrl}//HTML_site/project-info.html'>here</a> <br/>"
 
-                    sh "site -Pquality -U site:stage"
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
-                    comment+="rapport site : <a href='${jenkinsJobUrl}//HTML_site/project-info.html'>here</a> <br/>"
+                    messagePR+="job : ${env.JOB_NAME}"
 
-
-
-
-                    comment+="job : ${env.JOB_NAME}"
-
-                    sendCommentToPullRequest(prId, comment)
+                    sendCommentToPullRequest(prId, messagePR)
                 }
             }
         }
