@@ -67,7 +67,7 @@ node {
         if ("master" == env.BRANCH_NAME) {
             if(isUp("http://sonarqube:9000" )){
 
-                echo "sonar master"
+                echo("sonar master")
                 sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
 
             }
@@ -76,7 +76,7 @@ node {
 
             if(isUp(http://sonarqube:9000 )){
 
-                echo "sonar branch ${env.BRANCH_NAME}"
+                echo("sonar branch ${env.BRANCH_NAME}")
                 sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
 
             }
