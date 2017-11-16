@@ -51,7 +51,7 @@ void sendCommentToPullRequest(String prId, String messageContent){
 node {
     stage('metrics') {
         echo "build"
-        print env.toString()
+        print env.getOverriddenEnvironment()
         checkout scm
 
 
