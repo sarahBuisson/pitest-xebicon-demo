@@ -73,7 +73,7 @@ node {
         }
         else if(!env.BRANCH_NAME.startsWith("PR-")){
 
-            if(isUp(http://sonarqube:9000 )){
+            if(isUp("http://sonarqube:9000")){
 
                 echo("sonar branch ${env.BRANCH_NAME}")
                 sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
@@ -95,7 +95,7 @@ node {
                                                         -Dsonar.github.oauth=${env.GH_PASSWORD}  \
                                                         -Dsonar.verbose=true "
                     // -Dsonar.github.password=${env.GH_PASSWORD}
-                    if(isUp(http://sonarqube:9000 )){
+                    if(isUp("http://sonarqube:9000")){
                         sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam $githubSonarParam -B"
 
                         echo "metrics sonar"
