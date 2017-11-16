@@ -51,6 +51,7 @@ void sendCommentToPullRequest(String prId, String messageContent){
 node {
     stage('metrics') {
         echo "build"
+         echo "${env}"
         checkout scm
 
 
@@ -106,7 +107,7 @@ node {
 
 
                     echo "metrics pitest"
-                    sh "mvn pitest:mutationCoverage universal-module-aggregator:aggregate -Ppull-request -B"
+                    sh "mvn pitest:mutationCoverage universal-module-aggregator:aggregate -Pquality -Ppull-request  -DoriginReference=origin/sample_branch -B"
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
                     comment+="rapport pitest : <a href='${jenkinsJobUrl}/HTML_site/pit-reports/index.html'>here</a> <br/>"
 
