@@ -68,6 +68,7 @@ def getFromPom(pom, balise) {
     matcher ? matcher[0][1] : null
 }
 
+
 node {
     stage('build') {
        echo "build"
@@ -148,8 +149,6 @@ node {
             echo "for a PR"
 
             def githubUrl = "${env.CHANGE_URL}"
-
-            //sh "git remote add originPR https://github.com/$githubOrganization/$githubRepository.git"
 
             def resume = "Build Infos : <br/>"
 
