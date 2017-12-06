@@ -126,14 +126,15 @@
                     <plugin>
                         <groupId>org.pitest</groupId>
                         <artifactId>pitest-maven</artifactId>
-                        <version>1.2.4</version>
+                        <version>1.3.0</version>
                         <configuration>
                             <timestampedReports>false</timestampedReports>
                             <failWhenNoMutations>false</failWhenNoMutations>
                             <timeoutConstant>4000</timeoutConstant>
 
                             <pluginConfiguration>
-                                <originReference>origin/sample_branch</originReference>
+                                <originReference>${originReference}</originReference>
+                                <destinationReference>${destinationReference}</destinationReference>
 
                                 <scmConnection>scm:git:git@github.com:sarahBuisson/pitest-xebicon-demo.git</scmConnection>
                                 <scmRootDirectory>${project.basedir}</scmRootDirectory>
