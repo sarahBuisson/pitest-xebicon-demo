@@ -137,6 +137,8 @@ node {
 
             def githubUrl = "${env.CHANGE_URL}"
 
+            sh " git remote add originPR https://github.com/$githubOrganization/$githubRepository.git"
+
             def resume = "Build Infos : <br/>"
 
 
@@ -166,7 +168,7 @@ node {
 
 
                     // pitest
-                    sh "mvn pitest:mutationCoverage -Pquality -DoriginReference=$branchName -B"
+                    sh "mvn pitest:mutationCoverage -Pquality -DoriginReference=originPR/$branchName -DdestinationReference=originPR/master -B"
                     publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
                     resume+="rapport pitest : <a href='${jenkinsJobUrl}//HTML_site//pit-reports/index.html'>here</a> <br/>"
 
