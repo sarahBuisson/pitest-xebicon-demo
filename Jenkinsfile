@@ -68,11 +68,19 @@ def getFromPom(pom, balise) {
     matcher ? matcher[0][1] : null
 }
 
-
 node {
+ stage('info') {
+       sh "git branch"
+ //      sh "git remote"
+  //     sh "git log"
+   //    sh "git show-ref"
+
+
+    }
     stage('build') {
 
         checkout scm
+        sh "git branch"
         sh "mvn clean install -B"
     }
     stage('metrics') {
@@ -91,6 +99,7 @@ node {
         def groupId="com.github.sarahbuisson"
         def artifactId="pitest-xebicon-demo"
 
+        echo "for the branch  ${env.BRANCH_NAME}"
         if ("master" == env.BRANCH_NAME) {
             if (isUp(sonarQubeUrl)){
 
@@ -133,9 +142,11 @@ node {
 
 
         } else {
-
+            echo "for a PR"
 
             def githubUrl = "${env.CHANGE_URL}"
+
+            //sh "git remote add originPR https://github.com/$githubOrganization/$githubRepository.git"
 
             def resume = "Build Infos : <br/>"
 
@@ -153,6 +164,7 @@ node {
 
                     def branchName = getBranch(githubOrganization+"/"+githubRepository, 'sbuisson-git', env.CHANGE_ID);
 
+
                     //sonar
                     if(isUp(sonarQubeUrl)){
                         sh "mvn sonar:sonar -Dsonar.analysis.mode=preview -Dsonar.issuesReport.html.enable=true -Dsonar.issuesReport.json.enable=true $sonarParam $databaseSonarParam $githubSonarParam -B"
@@ -166,7 +178,8 @@ node {
 
 
                     // pitest
-                    sh "mvn pitest:mutationCoverage -Pquality -DoriginReference=$branchName -B"
+                      echo "metrics pitest"
+                    sh "mvn pitest:mutationCoverage -Ppull-request -DoriginReference=refs/remotes/origin/${env.BRANCH_NAME} -DdestinationReference=refs/remotes/origin/master -B -X"
                     publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
                     resume+="rapport pitest : <a href='${jenkinsJobUrl}//HTML_site//pit-reports/index.html'>here</a> <br/>"
 

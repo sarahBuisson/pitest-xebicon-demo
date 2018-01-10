@@ -10,13 +10,14 @@ public class FizzBuzz {
         }
         if (number % 5 == 0) {
             appendMessage("Buzz");
+
         }
         if (message.toString().isEmpty()) {
             appendMessage("" + number);
         }
         if (false){
 
-            appendMessage("code not covered by standard nor mutation");
+            appendMessage("code not covered by standard nor mutationd");
 
         }
         if (false){
