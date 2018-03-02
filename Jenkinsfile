@@ -78,13 +78,13 @@ node {
 
     }
     stage('build') {
-
+        sh "git branch"
         checkout scm
         sh "git branch"
         sh "mvn clean install -B"
     }
     stage('metrics') {
-
+        sh "git show-refs"
 
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
