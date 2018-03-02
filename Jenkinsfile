@@ -78,7 +78,7 @@ node {
 
     }
     stage('build') {
-        sh "git branch"
+       
         checkout scm
         sh "git branch"
         sh "mvn clean install -B"
