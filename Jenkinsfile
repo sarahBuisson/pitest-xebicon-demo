@@ -84,7 +84,7 @@ node {
         sh "mvn clean install -B"
     }
     stage('metrics') {
-        sh "git show-refs"
+        sh "git show-ref"
 
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
