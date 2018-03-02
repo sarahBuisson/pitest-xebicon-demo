@@ -70,7 +70,7 @@ def getFromPom(pom, balise) {
 
 node {
  stage('info') {
-       sh "git branch"
+    //   sh "git branch"
  //      sh "git remote"
   //     sh "git log"
    //    sh "git show-ref"
