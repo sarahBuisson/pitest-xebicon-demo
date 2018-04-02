@@ -154,7 +154,7 @@ node {
             resume+="<a href='${jenkinsJobUrl}/${env.BUILD_NUMBER}/console'>logs</a><br/>"
 
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-git', usernameVariable: 'GH_LOGIN', passwordVariable: 'GH_PASSWORD']]) {
-                withCredentials([[$class: 'StringBinding', credentialsId: ' git-token', variable: 'OATH']]) {
+                withCredentials([[$class: 'StringBinding', credentialsId: 'git-token-sarahbuisson', variable: 'OATH']]) {
                     def githubSonarParam="-Dsonar.github.pullRequest=${env.CHANGE_ID}\
                                                         -Dsonar.github.repository=$githubProject \
                                                         -Dsonar.github.login=${env.GH_LOGIN} \
