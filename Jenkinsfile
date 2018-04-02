@@ -117,7 +117,7 @@ node {
             if(isUp(sonarQubeUrl)){
 
                 echo("sonar branch ${env.BRANCH_NAME}")
-                sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
+                sh "mvn sonar:sonar $sonarParam $databaseSonarParam  -B "
 
             }
             sh "mvn pitest:mutationCoverage -Pquality -B"
