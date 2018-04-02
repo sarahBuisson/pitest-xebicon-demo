@@ -167,7 +167,7 @@ node {
 
                     //sonar
                     if(isUp(sonarQubeUrl)){
-                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview -Dsonar.issuesReport.html.enable=true -Dsonar.issuesReport.json.enable=true $sonarParam $databaseSonarParam $githubSonarParam -B"
+                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview -Dsonar.issuesReport.html.enable=true -Dsonar.issuesReport.json.enable=true $sonarParam $githubSonarParam -B"
 
                         echo "metrics sonar"
 
