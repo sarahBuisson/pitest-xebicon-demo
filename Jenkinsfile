@@ -96,7 +96,7 @@ node {
             if (isUp(sonarQubeUrl)){
 
                 echo("sonar master")
-                sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
+                sh "mvn sonar:sonar $sonarParam  -B "
 
             }
             sh "mvn pitest:mutationCoverage -Pquality -B"
