@@ -70,13 +70,13 @@ def getFromPom(pom, balise) {
 
 node {
     stage('build') {
-
+       echo "build"
         checkout scm
         sh "git branch"
         sh "mvn clean install -B"
     }
     stage('metrics') {
-
+        sh "git show-ref"
 
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
@@ -146,11 +146,11 @@ node {
             resume+="<a href='${jenkinsJobUrl}/${env.BUILD_NUMBER}/console'>logs</a><br/>"
 
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-git', usernameVariable: 'GH_LOGIN', passwordVariable: 'GH_PASSWORD']]) {
-                withCredentials([[$class: 'StringBinding', credentialsId: ' git-token', variable: 'OATH']]) {
+                withCredentials([[$class: 'StringBinding', credentialsId: 'git-token-sarahbuisson', variable: 'OATH']]) {
                     def githubSonarParam="-Dsonar.github.pullRequest=${env.CHANGE_ID}\
                                                         -Dsonar.github.repository=$githubProject \
                                                         -Dsonar.github.login=${env.GH_LOGIN} \
-                                                        -Dsonar.github.oauth=${env.GH_PASSWORD}  \
+                                                        -Dsonar.github.oauth=${env.OATH}  \
                                                         -Dsonar.verbose=true "
 
 
@@ -159,7 +159,7 @@ node {
 
                     //sonar
                     if(isUp(sonarQubeUrl)){
-                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview -Dsonar.issuesReport.html.enable=true -Dsonar.issuesReport.json.enable=true $sonarParam $databaseSonarParam $githubSonarParam -B"
+                        sh "mvn sonar:sonar -Dsonar.analysis.mode=preview -Dsonar.issuesReport.html.enable=true -Dsonar.issuesReport.json.enable=true $sonarParam $githubSonarParam -B"
 
                         echo "metrics sonar"
 
