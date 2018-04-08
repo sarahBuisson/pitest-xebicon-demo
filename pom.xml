@@ -20,7 +20,6 @@
     <modules>
         <module>fizzbuzz</module>
         <module>poker</module>
-        <module>agg</module>
     </modules>
 
     <dependencies>
