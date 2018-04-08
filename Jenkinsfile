@@ -69,14 +69,6 @@ def getFromPom(pom, balise) {
 }
 
 node {
- stage('info') {
-    //   sh "git branch"
- //      sh "git remote"
-  //     sh "git log"
-   //    sh "git show-ref"
-
-
-    }
     stage('build') {
        echo "build"
         checkout scm
@@ -90,7 +82,7 @@ node {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
 
         def databaseSonarParam = " -Dsonar.jdbc.username=${env.CI_LOGIN} -Dsonar.jdbc.password=${env.CI_PASSWORD} -Dsonar.jdbc.url=jdbc:postgresql://postgres:5432/ci "
-        def sonarParam = " -Dsonar.host.url=$sonarQubeUrl -Dsonar.login=${env.SONAR_LOGIN} -Dsonar.password=${env.SONAR_LOGIN} "
+        def sonarParam = " -Dsonar.host.url=$sonarQubeUrl -Dsonar.login=${env.SONAR_LOGIN} -Dsonar.password=${env.SONAR_PASSWORD} "
         //TODO : use credential for password sonar
         def jenkinsJobUrl="http://localhost:8080/job/$githubOrganization/job/$githubRepository/view/change-requests/job/${env.BRANCH_NAME}"
         http://localhost:8080/job/sarahbuisson/job/jenkinsCraft/view/change-requests/job/PR-18/HTML_site/pit-reports/index.html
@@ -104,7 +96,7 @@ node {
             if (isUp(sonarQubeUrl)){
 
                 echo("sonar master")
-                sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
+                sh "mvn sonar:sonar $sonarParam  -B "
 
             }
             sh "mvn pitest:mutationCoverage -Pquality -B"
@@ -125,7 +117,7 @@ node {
             if(isUp(sonarQubeUrl)){
 
                 echo("sonar branch ${env.BRANCH_NAME}")
-                sh "mvn sonar:sonar -Dsonar.analysis.mode=issues $sonarParam $databaseSonarParam  -B "
+                sh "mvn sonar:sonar $sonarParam $databaseSonarParam  -B "
 
             }
             sh "mvn pitest:mutationCoverage -Pquality -B"
