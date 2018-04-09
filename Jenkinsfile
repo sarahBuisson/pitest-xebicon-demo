@@ -79,7 +79,7 @@ pipeline {
         checkout scm
         sh "mvn clean install -B"
              }
-    }
+    }}
       
                     post { 
         always { 
