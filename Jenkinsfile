@@ -78,12 +78,15 @@ pipeline {
     }
           stages {
     stage('build') {
+             steps {
        echo "build"
         checkout scm
         sh "mvn clean install -B"
+             }
     }
       
     stage('metrics') {
+             steps {
         sh "git show-ref"
 
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
@@ -213,7 +216,7 @@ pipeline {
                 }
             }
         }
-        }}
+        }}}
     }
     }
 
