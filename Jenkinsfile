@@ -88,7 +88,7 @@ pipeline {
     stage('metrics') {
              steps {
         sh "git show-ref"
-
+  script {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
 
@@ -216,7 +216,7 @@ pipeline {
                 }
             }
         }
-        }}}
+        }}}}
     }
     }
 
