@@ -71,11 +71,7 @@ def getFromPom(pom, balise) {
 
 pipeline {
     agent any
-    post { 
-        always { 
-            echo 'I will always say Hello again!'
-        }
-    }
+
           stages {
     stage('build') {
              steps {
