@@ -70,6 +70,11 @@ def getFromPom(pom, balise) {
 
 
 node {
+    post { 
+        always { 
+            echo 'I will always say Hello again!'
+        }
+    }
     stage('build') {
        echo "build"
         checkout scm
