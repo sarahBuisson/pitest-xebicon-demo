@@ -83,8 +83,7 @@ pipeline {
       
                     post { 
         always { 
-    stage('metrics') {
-             steps {
+    
         sh "git show-ref"
                      
   script {
@@ -215,7 +214,7 @@ pipeline {
                 }
             }
         }
-        }}}}}
+        }}}
     }
     }
 
