@@ -69,16 +69,25 @@ def getFromPom(pom, balise) {
     matcher ? matcher[0][1] : null
 }
 
-node {
+
+pipeline {
+    agent any
+
+          stages {
     stage('build') {
+             steps {
        echo "build"
         checkout scm
-        sh "git branch"
         sh "mvn clean install -B"
-    }
-    stage('metrics') {
+             }
+    }}
+      
+                    post { 
+        always { 
+    
         sh "git show-ref"
-
+                     
+  script {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-sonar', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD']]) {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'sbuisson-ci', usernameVariable: 'CI_LOGIN', passwordVariable: 'CI_PASSWORD']]) {
 
@@ -100,6 +109,18 @@ node {
                 sh "mvn sonar:sonar $sonarParam  -B "
 
             }
+            sh "mvn pitest:mutationCoverage -Pquality -B"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
+
+            try{
+                sh "mvn universal-module-aggregator:aggregate -Pquality -B -U"
+            }catch ( e){
+                echo e.toString();
+            }
+            //build site ( for documentation)
+            sh "mvn site -Pquality -U site:stage"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/staging', reportFiles: '*', reportName: 'HTML site', reportTitles: 'site'])
+
             sh "mvn pitest:mutationCoverage -Pquality -B"
             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pit-reports', reportFiles: '*', reportName: 'pitest site', reportTitles: 'pitest'])
 
@@ -138,8 +159,6 @@ node {
             echo "for a PR"
 
             def githubUrl = "${env.CHANGE_URL}"
-
-            //sh "git remote add originPR https://github.com/$githubOrganization/$githubRepository.git"
 
             def resume = "Build Infos : <br/>"
 
@@ -196,8 +215,8 @@ node {
                 }
             }
         }
-        }}
-
+        }}}
+    }
     }
 
 }
